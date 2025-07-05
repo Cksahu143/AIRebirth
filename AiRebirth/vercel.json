@@ -1,0 +1,6 @@
+{
+  "outputDirectory": "client",
+  "builds": [
+    { "src": "client/index.html", "use": "@vercel/static" }
+  ]
+}
