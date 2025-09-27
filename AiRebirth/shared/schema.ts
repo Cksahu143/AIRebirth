@@ -1,17 +1,37 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from 'drizzle-orm';
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for Replit Auth
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
   content: text("content").notNull(),
   role: text("role").notNull(), // 'user' or 'assistant'
+  language: text("language").default("English"),
+  useContext: boolean("use_context").default(true),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
@@ -53,14 +73,29 @@ export const generatedCode = pgTable("generated_code", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+// Document analysis table
+export const documentAnalyses = pgTable("document_analyses", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  documentContent: text("document_content").notNull(),
+  question: text("question").notNull(),
+  analysis: text("analysis").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  profileImageUrl: true,
 });
 
 export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
+  userId: true,
   content: true,
   role: true,
+  language: true,
+  useContext: true,
 });
 
 export const insertGeneratedImageSchema = createInsertSchema(generatedImages).pick({
@@ -93,15 +128,28 @@ export const insertGeneratedCodeSchema = createInsertSchema(generatedCode).pick(
   complexity: true,
 });
 
+export const insertDocumentAnalysisSchema = createInsertSchema(documentAnalyses).pick({
+  userId: true,
+  documentContent: true,
+  question: true,
+  analysis: true,
+});
+
+// Types
+export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
-export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type GeneratedImage = typeof generatedImages.$inferSelect;
-export type InsertGeneratedImage = z.infer<typeof insertGeneratedImageSchema>;
 export type Translation = typeof translations.$inferSelect;
-export type InsertTranslation = z.infer<typeof insertTranslationSchema>;
 export type GeneratedText = typeof generatedTexts.$inferSelect;
-export type InsertGeneratedText = z.infer<typeof insertGeneratedTextSchema>;
 export type GeneratedCode = typeof generatedCode.$inferSelect;
+export type DocumentAnalysis = typeof documentAnalyses.$inferSelect;
+
+// Insert types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type InsertGeneratedImage = z.infer<typeof insertGeneratedImageSchema>;
+export type InsertTranslation = z.infer<typeof insertTranslationSchema>;
+export type InsertGeneratedText = z.infer<typeof insertGeneratedTextSchema>;
 export type InsertGeneratedCode = z.infer<typeof insertGeneratedCodeSchema>;
+export type InsertDocumentAnalysis = z.infer<typeof insertDocumentAnalysisSchema>;
