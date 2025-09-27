@@ -1,4 +1,4 @@
-import { Brain, MessageCircle, Image, Languages, PenTool, Code, User, Moon, Sun, X, Menu } from "lucide-react";
+import { Brain, MessageCircle, Image, Languages, PenTool, Code, FileText, Search, User, Moon, Sun, X, Menu } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,12 @@ import { useState } from "react";
 
 const navigation = [
   { name: "AI Chat", href: "/", icon: MessageCircle },
+  { name: "Deep Analyzer", href: "/deep-analyzer", icon: Search },
   { name: "Image Generation", href: "/image-generation", icon: Image },
   { name: "Translation", href: "/translation", icon: Languages },
   { name: "Text Generation", href: "/text-generation", icon: PenTool },
   { name: "Code Generation", href: "/code-generation", icon: Code },
+  { name: "Document Analyzer", href: "/document-analyzer", icon: FileText },
 ];
 
 export function Sidebar() {
