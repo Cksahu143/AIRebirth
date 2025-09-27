@@ -1,7 +1,10 @@
 export interface ChatMessage {
   id: number;
+  userId: string;
   content: string;
   role: 'user' | 'assistant';
+  language?: string;
+  useContext?: boolean;
   timestamp: Date | string;
 }
 
