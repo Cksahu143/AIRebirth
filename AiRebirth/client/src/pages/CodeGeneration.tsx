@@ -14,6 +14,8 @@ import { GeneratedCode } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 const languages = [
+  { value: "HTML", label: "HTML" },
+  { value: "CSS", label: "CSS" },
   { value: "JavaScript", label: "JavaScript" },
   { value: "TypeScript", label: "TypeScript" },
   { value: "Python", label: "Python" },
@@ -29,7 +31,10 @@ const languages = [
 ];
 
 const frameworks = [
-  { value: "", label: "None" },
+  { value: "none", label: "None" },
+  { value: "Bootstrap", label: "Bootstrap" },
+  { value: "Tailwind CSS", label: "Tailwind CSS" },
+  { value: "Bulma", label: "Bulma" },
   { value: "React", label: "React" },
   { value: "Vue.js", label: "Vue.js" },
   { value: "Angular", label: "Angular" },
@@ -51,10 +56,11 @@ const complexityLevels = [
 
 export default function CodeGeneration() {
   const [prompt, setPrompt] = useState("");
-  const [language, setLanguage] = useState("JavaScript");
-  const [framework, setFramework] = useState("");
+  const [language, setLanguage] = useState("HTML");
+  const [framework, setFramework] = useState("none");
   const [complexity, setComplexity] = useState("Intermediate");
   const [generatedCode, setGeneratedCode] = useState("");
+  const [codeExplanation, setCodeExplanation] = useState("");
   const { toast } = useToast();
 
   const { data: codeHistory = [] } = useQuery<GeneratedCode[]>({
@@ -63,16 +69,26 @@ export default function CodeGeneration() {
   });
 
   const generateCodeMutation = useMutation({
-    mutationFn: () => api.generateCode(prompt, language, framework, complexity),
-    onSuccess: (response) => {
-      const data = response.json();
-      data.then((result) => {
-        setGeneratedCode(result.generatedCode);
-        queryClient.invalidateQueries({ queryKey: ["/api/code"] });
-        toast({
-          title: "Success",
-          description: "Code generated successfully!",
-        });
+    mutationFn: async () => {
+      const response = await fetch("/api/code/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, language, framework, complexity })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: (result) => {
+      setGeneratedCode(result.generatedCode);
+      setCodeExplanation(result.explanation || "");
+      queryClient.invalidateQueries({ queryKey: ["/api/code"] });
+      toast({
+        title: "Success",
+        description: "Code generated successfully!",
       });
     },
     onError: () => {
@@ -109,6 +125,8 @@ export default function CodeGeneration() {
   const handleDownload = () => {
     if (generatedCode) {
       const fileExtensions: Record<string, string> = {
+        "HTML": "html",
+        "CSS": "css",
         "JavaScript": "js",
         "TypeScript": "ts",
         "Python": "py",
@@ -230,50 +248,97 @@ export default function CodeGeneration() {
           </Card>
 
           {/* Generated Code Display */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Generated Code</h3>
-                {generatedCode && (
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                      <Copy className="w-4 h-4 mr-1" />
-                      Copy
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                      <Download className="w-4 h-4 mr-1" />
-                      Download
-                    </Button>
+          {(generatedCode || generateCodeMutation.isPending) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Code Section */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Generated Code</h3>
+                    {generatedCode && (
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" onClick={handleCopy}>
+                          <Copy className="w-4 h-4 mr-1" />
+                          Copy Code
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleDownload}>
+                          <Download className="w-4 h-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              
-              <div className="bg-gray-950 dark:bg-gray-900 rounded-lg border overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-800 border-b border-gray-700">
-                  <span className="text-sm text-gray-300 font-mono">{language}</span>
-                  {framework && (
-                    <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
-                      {framework}
-                    </span>
-                  )}
-                </div>
-                <div className="p-4 min-h-40 max-h-96 overflow-y-auto">
-                  {generateCodeMutation.isPending ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" />
-                      <span className="text-gray-400">Generating code...</span>
+                  
+                  <div className="bg-gray-950 dark:bg-gray-900 rounded-lg border overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-800 border-b border-gray-700">
+                      <span className="text-sm text-gray-300 font-mono">{language}</span>
+                      {framework && framework !== 'none' && (
+                        <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
+                          {framework}
+                        </span>
+                      )}
                     </div>
-                  ) : generatedCode ? (
-                    <pre className="text-sm text-gray-100 font-mono whitespace-pre-wrap overflow-x-auto">
-                      <code>{generatedCode}</code>
-                    </pre>
-                  ) : (
-                    <p className="text-gray-500 italic">Generated code will appear here...</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="p-4 min-h-40 max-h-96 overflow-y-auto">
+                      {generateCodeMutation.isPending ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" />
+                          <span className="text-gray-400">Generating code...</span>
+                        </div>
+                      ) : generatedCode ? (
+                        <pre className="text-sm text-gray-100 font-mono whitespace-pre-wrap overflow-x-auto">
+                          <code>{generatedCode}</code>
+                        </pre>
+                      ) : (
+                        <p className="text-gray-500 italic">Generated code will appear here...</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Explanation Section */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Code Explanation</h3>
+                    {codeExplanation && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          navigator.clipboard.writeText(codeExplanation);
+                          toast({
+                            title: "Copied",
+                            description: "Explanation copied to clipboard",
+                          });
+                        }}
+                      >
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy Explanation
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-lg border p-4 min-h-40 max-h-96 overflow-y-auto">
+                    {generateCodeMutation.isPending ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" />
+                        <span className="text-muted-foreground">Generating explanation...</span>
+                      </div>
+                    ) : codeExplanation ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                          {codeExplanation}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground italic">Code explanation will appear here...</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Code History */}
           {codeHistory.length > 0 && (
