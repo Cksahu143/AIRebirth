@@ -30,24 +30,38 @@ The application follows a modern monorepo structure with clear separation betwee
 - **Runtime**: Node.js with Express.js
 - **Database ORM**: Drizzle ORM with PostgreSQL
 - **API Structure**: RESTful endpoints with Express routes
-- **AI Integration**: OpenAI API for chat, image generation, text processing, and code generation
+- **AI Integration**: OpenAI API for chat, image generation, text processing, code generation, and document analysis
 - **Session Management**: Express sessions with PostgreSQL store
 
 ### Database Schema
 The application uses the following main tables:
 - `users`: User authentication and profiles
-- `chat_messages`: Chat conversation history
+- `chat_messages`: Chat conversation history with context memory support
 - `generated_images`: Image generation records
 - `translations`: Translation history
 - `generated_texts`: Text generation history
 - `generated_code`: Code generation records
+- `document_analyses`: Document analysis history
 
 ### AI Services Integration
-- **Chat**: GPT-4o model for conversational AI
+- **Chat**: GPT-4o model for conversational AI with context memory toggle and improved link generation
 - **Image Generation**: DALL-E 3 for image creation
 - **Translation**: GPT-4o for multilingual translation
 - **Text Generation**: GPT-4o for content creation
 - **Code Generation**: GPT-4o for programming code in multiple languages
+- **Document Analysis**: GPT-4o for analyzing documents and answering questions
+- **Deep Analyzer**: Advanced AI tools for extended thinking, research, and critical analysis
+- **Web Search**: Free web search using DuckDuckGo API with AI-enhanced results
+- **URL Analysis**: Web page content analysis and summarization
+
+### Enhanced Features
+- **Markdown & Code Block Support**: Messages display with syntax highlighting and file tabs
+- **Clickable Links**: Enhanced link generation with proper markdown formatting
+- **Context Memory Toggle**: Users can enable/disable conversation memory per message
+- **Multi-file Code Display**: Code generation shows multiple files in organized tabs
+- **Deep Analysis Tools**: Three specialized analysis modes (Deep Think, Research, Critical)
+- **Real-time Web Search**: Free web search without API costs using DuckDuckGo
+- **URL Summarization**: Analyze and summarize any web page content
 
 ## Data Flow
 
@@ -82,6 +96,8 @@ The build process creates a `dist` folder containing:
 
 ```
 Changelog:
+- January 12, 2025. Added Deep Analyzer with advanced AI tools, free web search, and URL analysis
+- January 12, 2025. Enhanced link generation in chat responses with proper markdown formatting
 - June 28, 2025. Added PostgreSQL database integration
 - June 27, 2025. Initial setup
 ```
